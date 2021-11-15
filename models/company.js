@@ -49,7 +49,7 @@ class Company {
    * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    * */
 
-  static async findAll(filter) {
+  static async findAll(filter = {}) {
     /* 
       Added filters. Works by constructing the filter statement 
     */
@@ -86,18 +86,38 @@ class Company {
 
   static async get(handle) {
     const companyRes = await db.query(
-          `SELECT handle,
-                  name,
-                  description,
-                  num_employees AS "numEmployees",
-                  logo_url AS "logoUrl"
-           FROM companies
+          `SELECT c.handle,
+                  c.name,
+                  c.description,
+                  c.num_employees AS "numEmployees",
+                  c.logo_url AS "logoUrl",
+                  j.id,
+                  j.title,
+                  j.salary,
+                  j.equity,
+                  j.company_handle AS "companyHandle"
+           FROM companies AS c
+           LEFT JOIN jobs AS j
+           ON c.handle = j.company_handle
            WHERE handle = $1`,
         [handle]);
-
-    const company = companyRes.rows[0];
-
-    if (!company) throw new NotFoundError(`No company: ${handle}`);
+    if (!companyRes.rows[0]) throw new NotFoundError(`No company: ${handle}`);
+    
+    const jobs = companyRes.rows.map(r => ({
+      id : r.id,
+      title : r.title,
+      salary : r.salary,
+      equity : r.equity,
+      companyHandle : r.companyHandle
+    }))
+    const company = {
+      handle : companyRes.rows[0].handle,
+      name : companyRes.rows[0].name,
+      description : companyRes.rows[0].description,
+      numEmployees : companyRes.rows[0].numEmployees,
+      logoUrl : companyRes.rows[0].logoUrl
+    }
+    company["jobs"] = jobs
 
     return company;
   }
