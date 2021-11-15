@@ -176,6 +176,15 @@ describe("GET /users/:username", function () {
         lastName: "U1L",
         email: "user1@user.com",
         isAdmin: false,
+        jobs: [
+          {
+            "companyHandle": null,
+            "equity": null,
+            "id": null,
+            "salary": null,
+            "title": null,
+          },
+        ],
       },
     });
   });
