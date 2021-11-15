@@ -140,6 +140,15 @@ describe("get", function () {
       lastName: "U1L",
       email: "u1@email.com",
       isAdmin: false,
+      jobs: [
+        {
+          "companyHandle": null,
+          "equity": null,
+          "id": null,
+          "salary": null,
+          "title": null,
+        },
+      ],
     });
   });
 
