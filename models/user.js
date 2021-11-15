@@ -125,20 +125,37 @@ class User {
 
   static async get(username) {
     const userRes = await db.query(
-          `SELECT username,
-                  first_name AS "firstName",
-                  last_name AS "lastName",
-                  email,
-                  is_admin AS "isAdmin"
-           FROM users
-           WHERE username = $1`,
+          `SELECT u.username,
+                  u.first_name AS "firstName",
+                  u.last_name AS "lastName",
+                  u.email,
+                  u.is_admin AS "isAdmin",
+                  j.id,
+                  j.title,
+                  j.salary,
+                  j.equity,
+                  j.company_handle AS "companyHandle"
+           FROM users AS u
+           LEFT JOIN applications AS a
+           ON u.username = a.username
+           LEFT JOIN jobs AS j
+           ON a.job_id = j.id
+           WHERE u.username = $1`,
         [username],
     );
+    if (!userRes.rows[0]) throw new NotFoundError(`No user: ${username}`);
+    
+    const user = (({username, firstName, lastName, email, isAdmin}) => ({username, firstName, lastName, email, isAdmin}))(userRes.rows[0])
 
-    const user = userRes.rows[0];
+    const jobs = userRes.rows.map(r => ({
+      id : r.id,
+      title : r.title,
+      salary : r.salary,
+      equity : r.equity,
+      companyHandle : r.companyHandle
+    }))
 
-    if (!user) throw new NotFoundError(`No user: ${username}`);
-
+    user["jobs"] = jobs
     return user;
   }
 
@@ -203,6 +220,15 @@ class User {
     const user = result.rows[0];
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
+  }
+
+  static async apply(username, jobId) {
+    let res = await db.query(`
+      INSERT INTO applications
+      VALUES ($1, $2)
+      RETURNING username, job_id as "jobId"
+    `, [username, jobId])
+    return res.rows[0]
   }
 }
 
